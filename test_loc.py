@@ -1,8 +1,11 @@
 import torch
 import numpy as np
 from torchinfo import summary
+from pandas import DataFrame as df
+import cv2
 
 from localization_model import *
+from data_loaders import *
 
 def test_shapes():
     batch_size = 4
@@ -82,9 +85,50 @@ def test_utils():
 
     print(f"relative pose normalized: {relative_pose}")
 
+
+def test_data_loader():
+    data_path = "~/Documents/TrainingData/LAC/data"
+    sample_name = "light"
+    stereo_dir = f"stereo_pairs_{sample_name}"
+    csv_filename = f"pose_{sample_name}.csv"
+
+    img_path = os.path.expanduser(os.path.join(data_path, stereo_dir))
+    csv_path = os.path.expanduser(os.path.join(data_path, csv_filename))
+
+    transform = transforms.Compose([
+        transforms.Resize((512, 512)),
+        transforms.ToTensor()
+    ])
+
+    dataset = StereoDatasetEfficient(img_path, csv_path, transform, add_noise=False)
+
+    df = pd.read_csv(csv_path)
+    frame_indices = df["fname"].values  # ensure frames are accessed in order
+
+    idx = np.random.randint(0, len(frame_indices) - 1)
+
+    img_stk_t, img_stk_tp1, _ = dataset[20]
+
+    im_l_1 = np.array(img_stk_t[0, :, :])
+    im_r_1 = np.array(img_stk_t[1, :, :])
+    im_l_2 = np.array(img_stk_tp1[0, :, :])
+    im_r_2 = np.array(img_stk_tp1[1, :, :])
+
+    pair_image = np.block([
+        [im_l_1, im_r_1],
+        [im_l_2, im_r_2]]
+    )
+
+    print(f"Stereo Image Shape: {im_l_1.shape}")
+    
+    cv2.imshow("Stereo Pair", pair_image)
+    cv2.waitKey(5000)
+
+
 # run the tests
 test_shapes()
 test_utils()
+test_data_loader()
 
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

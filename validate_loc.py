@@ -17,15 +17,15 @@ img_path = os.path.expanduser(os.path.join(data_path, stereo_dir))
 csv_path = os.path.expanduser(os.path.join(data_path, csv_filename))
 
 transform = transforms.Compose([
-    transforms.Resize((128, 128)),
+    transforms.Resize((512, 512)),
     transforms.ToTensor()
 ])
 
 dataset = StereoDataset(img_path, csv_path, transform, add_noise=False)
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model = StereoPoseEstimation(input_size=(128, 128))
-model.load_state_dict(torch.load("model_lively-resonance-4_epoch_20.pth", map_location=device))
+model = StereoPoseEstimation(input_size=(512, 512))
+# model.load_state_dict(torch.load("model_wild-microwave-9_epoch_20.pth", map_location=device))
 model.to(device)
 model.eval()
 
