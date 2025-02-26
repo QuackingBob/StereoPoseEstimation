@@ -27,11 +27,11 @@ def denormalize_pose(x):
     return x
 
 def batch_denormalize_pose(x):
-    # """Denormalize a batch of poses."""
+    # not allowed to modify in-place for back prop
     # x[:, :3] = denormalize_translation(x[:, :3])
     # x[:, 3:] = denormalize_angle(x[:, 3:])
     # return x
-    x_trans = denormalize_translation(x[:, :3])  # Avoid modifying in-place
+    x_trans = denormalize_translation(x[:, :3])
     x_rot = denormalize_angle(x[:, 3:])
     return torch.cat([x_trans, x_rot], dim=1)
 

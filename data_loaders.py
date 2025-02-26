@@ -67,12 +67,10 @@ class StereoDatasetEfficient(Dataset):
         img1_L, img1_R = self.load_image_pair(left1_path, right1_path)
         img2_L, img2_R = self.load_image_pair(left2_path, right2_path)
 
-        # Apply augmentations if needed
         if self.add_noise:
             img1_L, img1_R = self.apply_augmentations(img1_L), self.apply_augmentations(img1_R)
             img2_L, img2_R = self.apply_augmentations(img2_L), self.apply_augmentations(img2_R)
 
-        # Convert to tensor and apply transformations
         if self.transform:
             img1_L, img1_R = self.transform(img1_L), self.transform(img1_R)
             img2_L, img2_R = self.transform(img2_L), self.transform(img2_R)

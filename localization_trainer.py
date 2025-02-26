@@ -17,30 +17,6 @@ from localization_model import *
 from localization_utils import *
 from data_loaders import StereoDatasetEfficient
 
-# def train_model(model, dataset, batch_size, epochs, lr, device):
-#     dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-#     optimizer = optim.Adam(model.parameters(), lr=lr)
-#     loss_fn = nn.MSELoss()
-    
-#     model.train()
-#     for epoch in range(epochs):
-#         total_loss = 0
-#         with tqdm(dataloader, desc=f"Epoch {epoch + 1}/{epochs}") as pbar:
-#             for img_stk_1, img_stk_2, pose in pbar:
-#                 img_stk_1, img_stk_2, pose = img_stk_1.to(device), img_stk_2.to(device), pose.to(device)
-#                 optimizer.zero_grad()
-#                 pred_pose = model(img_stk_1, img_stk_2)
-#                 loss = loss_fn(pred_pose, pose)
-#                 loss.backward()
-#                 optimizer.step()
-#                 total_loss += loss.item()
-#                 pbar.set_postfix(loss=total_loss / len(dataloader))
-        
-#         if (epoch + 1) % 10 == 0:
-#             torch.save(model.state_dict(), f"model_epoch_{epoch+1}.pth")
-#             print(f"Model saved at epoch {epoch + 1}")
-#         # print(f"Epoch {epoch + 1}/{epochs}, Loss: {total_loss / len(dataloader):.4f}")
-
 
 def train_model(model, dataset, batch_size, epochs, lr, device, normalized_pose=True):
     wandb.init(project="stereo_pose_estimation", config={
@@ -61,9 +37,10 @@ def train_model(model, dataset, batch_size, epochs, lr, device, normalized_pose=
         total_loss = 0
         with tqdm(dataloader, desc=f"Epoch {epoch + 1}/{epochs}") as pbar:
             for img_stk_1, img_stk_2, pose in pbar:
-                img_stk_1 = img_stk_1.to(device).float()  # Ensure float32
-                img_stk_2 = img_stk_2.to(device).float()  # Ensure float32
-                pose = pose.to(device).float()  # Ensure float32
+                # note to self: float 32 so change here
+                img_stk_1 = img_stk_1.to(device).float()
+                img_stk_2 = img_stk_2.to(device).float()
+                pose = pose.to(device).float()
 
                 optimizer.zero_grad()
                 pred_pose = model(img_stk_1, img_stk_2)
@@ -76,10 +53,10 @@ def train_model(model, dataset, batch_size, epochs, lr, device, normalized_pose=
                 total_loss += loss.item()
                 pbar.set_postfix(loss=total_loss / len(dataloader))
                 
-                wandb.log({"batch_loss": loss.item()})  # Log batch loss
+                wandb.log({"batch_loss": loss.item()})  # log batch loss
         
         epoch_loss = total_loss / len(dataloader)
-        wandb.log({"epoch_loss": epoch_loss})  # Log epoch loss
+        wandb.log({"epoch_loss": epoch_loss})  # log epoch loss
         
         if (epoch + 1) % 10 == 0:
             model_path = f"model_{name}_epoch_{epoch+1}.pth"

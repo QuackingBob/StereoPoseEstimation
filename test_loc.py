@@ -6,18 +6,17 @@ from localization_model import *
 
 def test_shapes():
     batch_size = 4
-    img_channels = 2  # Stereo image pair (L and R as channels)
-    img_height, img_width = 512, 512  # Example input resolution
+    img_channels = 2  # stereo pair L+R = 2
+    img_height, img_width = 512, 512
     feature_dim = 128
 
-    # Initialize model
     model = StereoPoseEstimation(input_size=(img_height, img_width))
 
-    # Generate dummy input
+    # dummy input
     img1 = torch.randn(batch_size, img_channels, img_height, img_width)
     img2 = torch.randn(batch_size, img_channels, img_height, img_width)
 
-    # Forward pass through feature extractor
+    # forward pass through feature extractor
     feat1 = model.feature_extractor(img1)
     feat2 = model.feature_extractor(img2)
 
@@ -25,17 +24,17 @@ def test_shapes():
     assert feat2.shape == (batch_size, feature_dim), f"Feature shape mismatch: {feat2.shape}"
     print("Feature extractor output shapes are correct.")
 
-    # Forward pass through cross attention
+    # forward pass through cross attention
     attended_feat = model.cross_attention(feat1, feat2)
     assert attended_feat.shape == (batch_size, feature_dim), f"Cross-attention shape mismatch: {attended_feat.shape}"
     print("Cross-attention output shape is correct.")
 
-    # Forward pass through pose regressor
+    # forward pass through pose regressor
     pose = model.regressor(attended_feat)
     assert pose.shape == (batch_size, 6), f"Pose output shape mismatch: {pose.shape}"
     print("Pose regressor output shape is correct.")
 
-    # Full model test
+    # full model test
     pose_full = model(img1, img2)
     assert pose_full.shape == (batch_size, 6), f"Full model output shape mismatch: {pose_full.shape}"
     print("Full model output shape is correct.")
@@ -83,7 +82,7 @@ def test_utils():
 
     print(f"relative pose normalized: {relative_pose}")
 
-# Run the test
+# run the tests
 test_shapes()
 test_utils()
 

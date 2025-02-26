@@ -17,7 +17,7 @@ class StereoFeatureExtractor(nn.Module):
     def __init__(self, channels, kernel_sizes, num_dense, dim_dense, input_size):
         super(StereoFeatureExtractor, self).__init__()
 
-        # Convolutional feature extractor
+        # conv feature extractor
         self.convs = nn.ModuleList([
             nn.Conv2d(in_channels=channels[i], 
                       out_channels=channels[i + 1],
@@ -28,18 +28,18 @@ class StereoFeatureExtractor(nn.Module):
 
         self.max_pool = nn.MaxPool2d(2, 2)
         
-        # Determine feature map size dynamically
+        # finmd feature map size dynamically
         with torch.no_grad():
             dummy_input = torch.randn(1, channels[0], *input_size)
             for conv in self.convs:
                 dummy_input = conv(dummy_input)
                 dummy_input = self.max_pool(dummy_input)
-            _, c, h, w = dummy_input.shape  # Extract final spatial dimensions
+            _, c, h, w = dummy_input.shape  # final dimensions
             self.feature_map_size = (c, h, w)
         
-        input_dim = c * h * w  # Correctly computed input dimension
+        input_dim = c * h * w  # computed input dimension
         
-        # Fully connected layers for feature embedding
+        # MLP for feature embedding
         dense_layers = []
         for _ in range(num_dense):
             dense_layers.append(nn.Linear(input_dim, dim_dense))
@@ -52,7 +52,7 @@ class StereoFeatureExtractor(nn.Module):
         for conv in self.convs:
             x = F.relu(conv(x))
             x = self.max_pool(x)
-        x = rearrange(x, 'b c h w -> b (c h w)')  # Flatten dynamically
+        x = rearrange(x, 'b c h w -> b (c h w)')  # flatten 
         x = self.encoder_dense(x)
         return x
 
@@ -85,14 +85,14 @@ class PoseRegressor(nn.Module):
         return self.mlp(x)
 
 class StereoPoseEstimation(nn.Module):
-    def __init__(self, input_size=(64, 64)):  # Accepts input size dynamically
+    def __init__(self, input_size=(64, 64)): 
         super(StereoPoseEstimation, self).__init__()
         self.feature_extractor = StereoFeatureExtractor(
             channels=[2, 16, 32, 64], 
             kernel_sizes=[5, 3, 3],
             num_dense=2,
             dim_dense=128,
-            input_size=input_size  # Pass input size for dynamic feature size computation
+            input_size=input_size  # pass input size for dynamic feature size computation
         )
         feature_dim = self.feature_extractor.feature_map_size[0] * \
                       self.feature_extractor.feature_map_size[1] * \
