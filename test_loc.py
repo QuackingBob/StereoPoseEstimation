@@ -109,10 +109,10 @@ def test_data_loader():
 
     img_stk_t, img_stk_tp1, _ = dataset[20]
 
-    im_l_1 = np.array(img_stk_t[0, :, :])
-    im_r_1 = np.array(img_stk_t[1, :, :])
-    im_l_2 = np.array(img_stk_tp1[0, :, :])
-    im_r_2 = np.array(img_stk_tp1[1, :, :])
+    im_l_1 = img_stk_t[0, :, :].numpy()
+    im_r_1 = img_stk_t[1, :, :].numpy()
+    im_l_2 = img_stk_tp1[0, :, :].numpy()
+    im_r_2 = img_stk_tp1[1, :, :].numpy()
 
     pair_image = np.block([
         [im_l_1, im_r_1],
