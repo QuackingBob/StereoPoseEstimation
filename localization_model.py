@@ -56,7 +56,6 @@ class StereoFeatureExtractor(nn.Module):
         x = self.encoder_dense(x)
         return x
 
-
 class CrossAttention(nn.Module):
     def __init__(self, dim):
         super(CrossAttention, self).__init__()
@@ -71,6 +70,65 @@ class CrossAttention(nn.Module):
         v = self.value(feat2)
         attn_weights = torch.softmax((q @ k.T) * self.scale, dim=-1)
         return attn_weights @ v
+        
+class RelationMLP(nn.Module):
+    """
+    Alternate to cross-attention mechanism using stacked features
+    """
+    def __init__(self, input_dim, hidden_dim=128, output_dim=1):
+        super(RelationMLP, self).__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim * 2, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 2, output_dim)
+        )
+
+    def forward(self, feat1, feat2):
+        x = torch.cat((feat1, feat2), dim=-1)  # Concatenate feature vectors
+        return self.mlp(x)
+
+class RelationMLP_Alt(nn.Module):
+    """
+    Use the difference and product of features to learn relation
+    """
+    def __init__(self, input_dim, hidden_dim=128, output_dim=1):
+        super(RelationMLP_Alt, self).__init__()
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim * 3, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.ReLU(),
+            nn.Linear(hidden_dim // 2, output_dim)
+        )
+
+    def forward(self, feat1, feat2):
+        diff = feat1 - feat2
+        prod = feat1 * feat2
+        x = torch.cat((feat1, feat2, diff, prod), dim=-1)
+        return self.mlp(x)
+
+class StableCrossAttention(nn.Module):
+    """
+    Use layer normalization for more stable cross attention
+    """
+    def __init__(self, input_dim, hidden_dim=128):
+        super(StableCrossAttention, self).__init__()
+        self.layer_norm = nn.LayerNorm(input_dim)
+        self.attn = nn.MultiheadAttention(embed_dim=input_dim, num_heads=4, dropout=0.1)
+        self.mlp = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.ReLU(),
+            nn.Linear(hidden_dim, 1)
+        )
+    
+    def forward(self, feat1, feat2):
+        feat1, feat2 = self.layer_norm(feat1), self.layer_norm(feat2)
+        feat1, feat2 = feat1.unsqueeze(0), feat2.unsqueeze(0)  # (1, batch_size, dim)
+        attn_output, _ = self.attn(feat1, feat2, feat2)
+        attn_output = attn_output.squeeze(0)
+        return self.mlp(attn_output)
 
 class PoseRegressor(nn.Module):
     def __init__(self, input_dim, output_dim):
